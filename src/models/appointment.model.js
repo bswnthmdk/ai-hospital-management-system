@@ -6,41 +6,46 @@ const appointmentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
       required: true,
+      index: true,
     },
+
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
       required: true,
+      index: true,
     },
+
     departmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
       required: true,
+      index: true,
     },
+
     appointmentDateTime: {
       type: Date,
       required: true,
-      index: true,
     },
-    duration: {
-      type: Number, // minutes
-      default: 30,
-      min: 15,
-    },
+
     status: {
       type: String,
       enum: ["BOOKED", "COMPLETED", "CANCELLED"],
       default: "BOOKED",
     },
+
     reason: {
       type: String,
+      trim: true,
     },
   },
   { timestamps: true }
 );
 
-appointmentSchema.index({ doctorId: 1, appointmentDateTime: 1 });
-appointmentSchema.index({ patientId: 1 });
-appointmentSchema.index({ departmentId: 1 });
+// HARD GUARANTEE: one doctor cannot have two appointments at the same time
+appointmentSchema.index(
+  { doctorId: 1, appointmentDateTime: 1 },
+  { unique: true }
+);
 
 export default mongoose.model("Appointment", appointmentSchema);
