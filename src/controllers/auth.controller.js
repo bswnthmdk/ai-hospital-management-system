@@ -158,7 +158,7 @@ const loginPatient = async (req, res, next) => {
     }
 
     // 2. Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email, role: "PATIENT" });
     if (!user) {
       throw new ApiError(401, "Invalid credentials");
     }
@@ -292,7 +292,7 @@ const loginDoctor = async (req, res, next) => {
     }
 
     // 2. Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email, role: "DOCTOR" });
     if (!user) {
       throw new ApiError(401, "Invalid credentials");
     }
