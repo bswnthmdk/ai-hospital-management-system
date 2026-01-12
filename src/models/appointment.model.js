@@ -27,6 +27,10 @@ const appointmentSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    appointmentReason: {
+      type: String,
+      trim: true,
+    },
 
     status: {
       type: String,
@@ -34,9 +38,17 @@ const appointmentSchema = new mongoose.Schema(
       default: "BOOKED",
     },
 
-    reason: {
+    cancelledBy: {
       type: String,
-      trim: true,
+      enum: ["PATIENT", "DOCTOR", "SYSTEM"],
+    },
+
+    cancelledAt: {
+      type: Date,
+    },
+
+    cancelReason: {
+      type: String,
     },
   },
   { timestamps: true }
