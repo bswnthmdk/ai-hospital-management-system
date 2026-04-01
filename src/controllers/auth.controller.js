@@ -11,6 +11,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
+    // Here this DB call can be avoided by getting the previously fetched 'user' object.
     const user = await User.findById(userId);
 
     const accessToken = user.generateAccessToken();
@@ -18,7 +19,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
-    // Like this case in general to save anything the entire model gets verified with all the fields of the schema, to do that I have to pass data of all the fields of that userId, otherwise it will throw an error of "Insufficient data". But here I am passing the value of field 'refreshToken' only and I want to save only this value without any other validation. That's why I am putting that argument.
+    // Like this case in general to save anything the entire model gets verified with all the fields of the schema, to do that I have to pass data of all the fields of that userId, otherwise it will throw an error of "Insufficient data". But here I am passing the value of field 'refreshToken' only and I want to save only this value without any other validation. That's why I am putting that argument (validateBeforeSave: false).
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -36,7 +37,7 @@ const refreshAccessToken = async (req, res, next) => {
     // 1. Verify the token
     const decodedRefreshToken = jwt.verify(
       incomingRefreshToken,
-      process.env.REFRESH_TOKEN_SECRET
+      process.env.REFRESH_TOKEN_SECRET,
     );
     if (!decodedRefreshToken) {
       throw new ApiError(403, "Invalid or expired refresh token");
@@ -75,8 +76,8 @@ const refreshAccessToken = async (req, res, next) => {
             accessToken,
             refreshToken: newRefreshToken,
           },
-          "Access token refreshed successfully"
-        )
+          "Access token refreshed successfully",
+        ),
       );
   } catch (error) {
     next(error);
@@ -116,7 +117,7 @@ const registerPatient = async (req, res, next) => {
           role: "PATIENT",
         },
       ],
-      { session }
+      { session },
     );
 
     // 5. Create Patient profile
@@ -131,7 +132,7 @@ const registerPatient = async (req, res, next) => {
           bloodType,
         },
       ],
-      { session }
+      { session },
     );
 
     // 6. Commit transaction
@@ -175,8 +176,9 @@ const loginPatient = async (req, res, next) => {
     }
 
     // 5. Generate tokens
+    // Here instead of passing the 'id' of user document the 'user' object should be passed in generateAccessAndRefreshToken() to avoid DB call again inside that function.
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-      user._id
+      user._id,
     );
 
     // 6. Cookie options
@@ -200,8 +202,8 @@ const loginPatient = async (req, res, next) => {
               role: user.role,
             },
           },
-          "Patient Login successful"
-        )
+          "Patient Login successful",
+        ),
       );
   } catch (error) {
     next(error);
@@ -252,7 +254,7 @@ const registerDoctor = async (req, res, next) => {
           role: "DOCTOR",
         },
       ],
-      { session }
+      { session },
     );
 
     // 6. Create Doctor profile
@@ -265,7 +267,7 @@ const registerDoctor = async (req, res, next) => {
           experienceYears,
         },
       ],
-      { session }
+      { session },
     );
 
     // 7. Commit transaction
@@ -310,7 +312,7 @@ const loginDoctor = async (req, res, next) => {
 
     // 5. Generate tokens
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-      user._id
+      user._id,
     );
 
     // 6. Cookie options
@@ -334,8 +336,8 @@ const loginDoctor = async (req, res, next) => {
               role: user.role,
             },
           },
-          "Doctor Login successful"
-        )
+          "Doctor Login successful",
+        ),
       );
   } catch (error) {
     next(error);

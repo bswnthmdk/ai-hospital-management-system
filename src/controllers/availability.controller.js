@@ -4,7 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 
 const createAvailability = async (req, res, next) => {
   try {
-    const doctorId = req.user._id; // The user who is booking an appointment is the doctor (coming from verifyJWT)
+    const doctorId = req.user._id; // The user who is creating an availability is a doctor (coming from verifyJWT)
     const { startDateTime, endDateTime, slotDuration } = req.body;
 
     if (!startDateTime || !endDateTime) {

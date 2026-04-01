@@ -18,6 +18,10 @@ const patientSchema = new mongoose.Schema(
       enum: ["MALE", "FEMALE", "OTHER"],
       required: true,
     },
+    bloodType: {
+      type: String,
+      enum: ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"],
+    },
     phone: {
       type: String,
       required: true,
@@ -26,12 +30,8 @@ const patientSchema = new mongoose.Schema(
     address: {
       type: String,
     },
-    bloodType: {
-      type: String,
-      enum: ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"],
-    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Patient", patientSchema);
