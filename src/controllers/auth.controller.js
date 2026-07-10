@@ -149,9 +149,11 @@ const registerPatient = async (req, res, next) => {
 
     return res
       .status(201)
-      .json(new ApiResponse(null, "Patient registered successfully"));
+      .json(new ApiResponse(null, "Patient registration is successful"));
+
+    console.log("Patient registration is successful");
   } catch (error) {
-    console.log("Patient registered failed");
+    console.log("Patient registration is failed");
     await session.abortTransaction();
     session.endSession();
     next(error); // IMPORTANT: centralized error handler
@@ -211,14 +213,13 @@ const loginPatient = async (req, res, next) => {
               role: user.role,
             },
           },
-          "Patient logged in successfully",
+          "Patient log in is successful",
         ),
       );
 
-    console.log("Patient logged in successfully");
+    console.log("Patient log in is successful");
   } catch (error) {
-    console.log("Patient logged in failed");
-
+    console.log("Patient log in is failed");
     next(error);
   }
 };
@@ -289,8 +290,10 @@ const registerDoctor = async (req, res, next) => {
 
     return res
       .status(201)
-      .json(new ApiResponse(null, "Doctor registered successfully"));
+      .json(new ApiResponse(null, "Doctor registration is successful"));
+    console.log("Doctor registration is successful");
   } catch (error) {
+    console.log("Doctor registration is failed");
     await session.abortTransaction();
     session.endSession();
     next(error);
@@ -349,10 +352,12 @@ const loginDoctor = async (req, res, next) => {
               role: user.role,
             },
           },
-          "Doctor Login successful",
+          "Doctor login is successful",
         ),
       );
+    console.log("Doctor login is successful");
   } catch (error) {
+    console.log("Doctor login is failed");
     next(error);
   }
 };
