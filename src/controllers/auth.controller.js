@@ -147,11 +147,10 @@ const registerPatient = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
+    console.log("Patient registration is successful");
     return res
       .status(201)
       .json(new ApiResponse(null, "Patient registration is successful"));
-
-    console.log("Patient registration is successful");
   } catch (error) {
     console.log("Patient registration is failed");
     await session.abortTransaction();
@@ -199,6 +198,7 @@ const loginPatient = async (req, res, next) => {
     };
 
     // 7. Send response
+    console.log("Patient log in is successful");
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -216,8 +216,6 @@ const loginPatient = async (req, res, next) => {
           "Patient log in is successful",
         ),
       );
-
-    console.log("Patient log in is successful");
   } catch (error) {
     console.log("Patient log in is failed");
     next(error);
@@ -288,10 +286,10 @@ const registerDoctor = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
+    console.log("Doctor registration is successful");
     return res
       .status(201)
       .json(new ApiResponse(null, "Doctor registration is successful"));
-    console.log("Doctor registration is successful");
   } catch (error) {
     console.log("Doctor registration is failed");
     await session.abortTransaction();
@@ -338,6 +336,7 @@ const loginDoctor = async (req, res, next) => {
     };
 
     // 7. Send response
+    console.log("Doctor login is successful");
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -355,7 +354,6 @@ const loginDoctor = async (req, res, next) => {
           "Doctor login is successful",
         ),
       );
-    console.log("Doctor login is successful");
   } catch (error) {
     console.log("Doctor login is failed");
     next(error);
