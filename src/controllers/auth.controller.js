@@ -85,6 +85,14 @@ const refreshAccessToken = async (req, res, next) => {
 };
 
 const registerPatient = async (req, res, next) => {
+  /**
+   * Here are two writes: User and Patient.
+    (Without a transaction)
+    if, User created ✅ but ❌ Patient creation fails
+    Then, User document exists but Patient document doesn't exist
+    Result: Your database becomes inconsistent.
+   */
+  // Transactions prevent partial database writes and keep related data consistent.
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -143,6 +151,7 @@ const registerPatient = async (req, res, next) => {
       .status(201)
       .json(new ApiResponse(null, "Patient registered successfully"));
   } catch (error) {
+    console.log("Patient registered failed");
     await session.abortTransaction();
     session.endSession();
     next(error); // IMPORTANT: centralized error handler
@@ -202,10 +211,14 @@ const loginPatient = async (req, res, next) => {
               role: user.role,
             },
           },
-          "Patient Login successful",
+          "Patient logged in successfully",
         ),
       );
+
+    console.log("Patient logged in successfully");
   } catch (error) {
+    console.log("Patient logged in failed");
+
     next(error);
   }
 };

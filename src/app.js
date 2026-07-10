@@ -9,6 +9,7 @@ app.use(express.json());
 
 // test route
 app.get("/", (req, res) => {
+  console.log("Hospital backend running");
   res.send("Hospital backend running");
 });
 
