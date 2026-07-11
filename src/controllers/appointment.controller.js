@@ -36,7 +36,7 @@ const bookNewAppointment = async (req, res, next) => {
     if (!availability) {
       throw new ApiError(
         400,
-        "Requested time is outside doctor's availability"
+        "Requested time is outside doctor's availability",
       );
     }
 
@@ -58,16 +58,17 @@ const bookNewAppointment = async (req, res, next) => {
           doctorId,
           departmentId,
           appointmentDateTime: requestedTime,
-          reason,
+          appointmentReason: reason,
           status: "BOOKED",
         },
       ],
-      { session }
+      { session },
     );
 
     await session.commitTransaction();
     session.endSession();
 
+    console.log("Appointment booked successfully");
     return res
       .status(201)
       .json(new ApiResponse(appointment, "Appointment booked successfully"));
@@ -75,10 +76,11 @@ const bookNewAppointment = async (req, res, next) => {
     await session.abortTransaction();
     session.endSession();
 
+    console.log("Failed to book appointment");
     // Duplicate key error = slot already booked
     if (error.code === 11000) {
       return next(
-        new ApiError(409, "This slot is already booked. Choose another time.")
+        new ApiError(409, "This slot is already booked. Choose another time."),
       );
     }
 
@@ -86,95 +88,105 @@ const bookNewAppointment = async (req, res, next) => {
   }
 };
 
-const cancelAppointment = async (req, res, next) => {};
-
-const getAvailableSlots = async (req, res, next) => {
+const cancelAppointment = async (req, res, next) => {
   try {
-    /**
-     *  If User._id is used, we need to join for each query as both the 'Appointment' & 'Availability' use Doctor's document ObjectId
-     *  doctorId = Doctor._id (MongoDB’s own ObjectId for the Doctor document)
-     */
-    const { doctorId, date } = req.query; // date = YYYY-MM-DD
+    const { appointmentId, cancelReason } = req.body;
 
-    // 1. Validate inputs
-    if (!doctorId || !date) {
-      throw new ApiError(400, "doctorId and date are required");
+    if (!appointmentId) {
+      throw new ApiError(400, "appointmentId is required");
     }
 
-    // 2. Validate doctor existence and status
-    const doctor = await Doctor.findOne({
-      _id: doctorId,
-      isActive: true,
-    });
-
-    if (!doctor) {
-      throw new ApiError(404, "Doctor not found or inactive");
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+      throw new ApiError(404, "Appointment not found");
     }
 
-    // 3. Create day range from date
-    const dayStart = new Date(`${date}T00:00:00.000Z`); // YYYY-MM-DDT00:00:00.000Z
-    const dayEnd = new Date(`${date}T23:59:59.999Z`); // YYYY-MM-DDT23:59:59.999Z
-
-    if (isNaN(dayStart.getTime()) || isNaN(dayEnd.getTime())) {
-      throw new ApiError(400, "Invalid date format");
+    if (appointment.status === "CANCELLED") {
+      throw new ApiError(400, "Appointment is already cancelled");
     }
 
-    // 4. Fetch all active availability windows overlapping this day
-    const availabilities = await Availability.find({
-      doctorId,
-      isActive: true,
-      startDateTime: { $lt: dayEnd },
-      endDateTime: { $gt: dayStart },
-    }).sort({
-      startDateTime: 1,
-    });
+    appointment.status = "CANCELLED";
+    appointment.cancelledBy = req.user?.role || "SYSTEM";
+    appointment.cancelledAt = new Date();
+    if (cancelReason) appointment.cancelReason = cancelReason;
 
-    if (availabilities.length === 0) {
-      return res
-        .status(200)
-        .json(new ApiResponse([], "No availability for this day")); // As there are no avaiable window on that day, returning an empty arr as empty slot
-    }
+    await appointment.save();
 
-    // 5. Fetch all BOOKED appointments for that day (once)
-    const bookedAppointments = await Appointment.find({
-      doctorId,
-      appointmentDateTime: { $gte: dayStart, $lte: dayEnd },
-      status: "BOOKED",
-    }).select("appointmentDateTime");
-    // 'bookedAppointments' is an arr containing all booked appointment's starting dateTime
-
-    // Create a Set of booked slot start times for quick lookup
-    const bookedSlotsStartTime = new Set(
-      bookedAppointments.map((appt) => appt.appointmentDateTime.getTime())
-    );
-
-    // 6. Generate slots in memory
-    const slots = [];
-
-    for (const availability of availabilities) {
-      const slotDurationMs = availability.slotDuration * 60 * 1000; // convert slot duration mins to ms
-
-      let slotStart = availability.startDateTime.getTime(); // probable 'slot start time' which is equal to the 'availability window start time' in ms. This is a variable as it will be incremented on each slot generation
-      const availabilityEnd = availability.endDateTime.getTime(); // availability window end time in ms
-
-      while (slotStart + slotDurationMs <= availabilityEnd) {
-        // To avoid slots that overflow the availability window and can cause partial slots
-        slots.push({
-          startTime: new Date(slotStart),
-          endTime: new Date(slotStart + slotDurationMs),
-          status: bookedSlotsStartTime.has(slotStart) ? "BOOKED" : "OPEN", // Existance of slot in 'bookedSlotsStartTime' Set means its booked
-        });
-
-        slotStart += slotDurationMs; // Move to next slot start time
-      }
-    }
-
+    console.log("Appointment cancelled successfully");
     return res
       .status(200)
-      .json(new ApiResponse(slots, "Available slots fetched successfully"));
+      .json(new ApiResponse(appointment, "Appointment cancelled successfully"));
   } catch (error) {
+    console.log("Failed to cancel appointment");
     next(error);
   }
 };
 
-export { bookNewAppointment, cancelAppointment, getAvailableSlots };
+const getAllAppointments = async (req, res, next) => {
+  try {
+    const {
+      status,
+      doctorId,
+      patientId,
+      departmentId,
+      fromDate,
+      toDate,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const filter = {};
+    if (status) filter.status = status;
+    if (doctorId) filter.doctorId = doctorId;
+    if (patientId) filter.patientId = patientId;
+    if (departmentId) filter.departmentId = departmentId;
+
+    if (fromDate || toDate) {
+      filter.appointmentDateTime = {};
+      if (fromDate) filter.appointmentDateTime.$gte = new Date(fromDate);
+      if (toDate) filter.appointmentDateTime.$lte = new Date(toDate);
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [appointments, total] = await Promise.all([
+      Appointment.find(filter)
+        .populate({
+          path: "patientId",
+          select: "userId phone",
+          populate: { path: "userId", select: "name email" },
+        })
+        .populate({
+          path: "doctorId",
+          select: "userId specialization",
+          populate: { path: "userId", select: "name email" },
+        })
+        .populate("departmentId", "name")
+        .sort({ appointmentDateTime: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Appointment.countDocuments(filter),
+    ]);
+
+    console.log("Appointments fetched successfully");
+    return res.status(200).json(
+      new ApiResponse(
+        {
+          appointments,
+          pagination: {
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / Number(limit)),
+          },
+        },
+        "Appointments fetched successfully",
+      ),
+    );
+  } catch (error) {
+    console.log("Failed to fetch appointments");
+    next(error);
+  }
+};
+
+export { bookNewAppointment, cancelAppointment, getAllAppointments };
