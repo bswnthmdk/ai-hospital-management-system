@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
-    hashedPassword: {
+    password: {
       type: String,
       required: true,
       minlength: 8,
@@ -27,11 +27,11 @@ const userSchema = new mongoose.Schema(
     },
     refreshToken: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.hashedPassword);
+  return await bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.generateAccessToken = function () {
@@ -44,7 +44,7 @@ userSchema.methods.generateAccessToken = function () {
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-    }
+    },
   );
 };
 
@@ -56,7 +56,7 @@ userSchema.methods.generateRefreshToken = function () {
     process.env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-    }
+    },
   );
 };
 

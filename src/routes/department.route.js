@@ -5,7 +5,7 @@ import {
   getAllDepartments,
   getDepartmentById,
   updateDepartment,
-  deactivateDepartment,
+  toggleDepartmentStatus,
 } from "../controllers/department.controller.js";
 import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
@@ -21,7 +21,7 @@ router
   .route("/:departmentId")
   .patch(verifyJWT, authorizeRoles("ADMIN"), updateDepartment);
 router
-  .route("/:departmentId/deactivate")
-  .patch(verifyJWT, authorizeRoles("ADMIN"), deactivateDepartment);
+  .route("/:departmentId/toggle-status")
+  .patch(verifyJWT, authorizeRoles("ADMIN"), toggleDepartmentStatus);
 
 export default router;

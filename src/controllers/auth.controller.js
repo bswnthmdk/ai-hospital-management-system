@@ -121,7 +121,7 @@ const registerPatient = async (req, res, next) => {
         {
           name,
           email,
-          hashedPassword,
+          password: hashedPassword,
           role: "PATIENT",
         },
       ],
@@ -254,7 +254,7 @@ const registerDoctor = async (req, res, next) => {
     }
 
     // 4. Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // 5. Create User (DOCTOR)
     const [user] = await User.create(
@@ -262,7 +262,7 @@ const registerDoctor = async (req, res, next) => {
         {
           name,
           email,
-          passwordHash,
+          password: hashedPassword,
           role: "DOCTOR",
         },
       ],
@@ -425,7 +425,7 @@ const registerAdmin = async (req, res, next) => {
     await User.create({
       name,
       email,
-      hashedPassword,
+      password: hashedPassword,
       role: "ADMIN",
     });
 
