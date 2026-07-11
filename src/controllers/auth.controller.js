@@ -384,7 +384,6 @@ const logoutUser = async (req, res, next) => {
     const options = {
       httpOnly: true,
       secure: true,
-      sameSite: "Strict",
     };
 
     return res
@@ -397,6 +396,103 @@ const logoutUser = async (req, res, next) => {
   }
 };
 
+const registerAdmin = async (req, res, next) => {
+  try {
+    const { name, email, password, adminKey } = req.body;
+
+    // 1. Basic validation
+    if (!name || !email || !password || !adminKey) {
+      throw new ApiError(400, "Missing required fields");
+    }
+
+    // 2. Guard against open admin creation
+    if (adminKey !== process.env.ADMIN_REGISTRATION_KEY) {
+      throw new ApiError(403, "Invalid admin registration key");
+    }
+
+    // 3. Check email uniqueness
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ApiError(409, "Email already registered");
+    }
+
+    // 4. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 5. Create User (ADMIN)
+    await User.create({
+      name,
+      email,
+      hashedPassword,
+      role: "ADMIN",
+    });
+
+    console.log("Admin registration is successful");
+    return res
+      .status(201)
+      .json(new ApiResponse(null, "Admin registration is successful"));
+  } catch (error) {
+    console.log("Admin registration is failed");
+    next(error);
+  }
+};
+
+const loginAdmin = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1. Basic validation
+    if (!email || !password) {
+      throw new ApiError(400, "Email and password are required");
+    }
+
+    // 2. Find user
+    const user = await User.findOne({ email, role: "ADMIN" });
+    if (!user) {
+      throw new ApiError(401, "Invalid credentials");
+    }
+
+    // 3. Verify password
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+      throw new ApiError(401, "Invalid credentials");
+    }
+
+    // 4. Generate tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user._id,
+    );
+
+    // 5. Cookie options
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    console.log("Admin log in is successful");
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          {
+            user: {
+              id: user._id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+            },
+          },
+          "Admin logged in successfully",
+        ),
+      );
+  } catch (error) {
+    console.log("Admin log in is failed");
+    next(error);
+  }
+};
+
 export {
   registerPatient,
   loginPatient,
@@ -404,4 +500,6 @@ export {
   loginDoctor,
   logoutUser,
   refreshAccessToken,
+  registerAdmin,
+  loginAdmin,
 };

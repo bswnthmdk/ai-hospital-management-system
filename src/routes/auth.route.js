@@ -6,6 +6,8 @@ import {
   registerDoctor,
   loginDoctor,
   logoutUser,
+  registerAdmin,
+  loginAdmin,
   refreshAccessToken,
 } from "../controllers/auth.controller.js";
 import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
@@ -23,6 +25,10 @@ router
   .route("/register/doctor")
   .post(verifyJWT, authorizeRoles("ADMIN"), registerDoctor);
 router.route("/login/doctor").post(loginDoctor);
+
+// Admin auth
+router.route("/register/admin").post(registerAdmin); // gated by secret key, not JWT
+router.route("/login/admin").post(loginAdmin);
 
 // Shared
 router.route("/logout").post(verifyJWT, logoutUser);
