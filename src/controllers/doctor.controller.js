@@ -108,40 +108,34 @@ const updateDoctor = async (req, res, next) => {
   }
 };
 
-const updateDoctorStatus = async (req, res, next) => {
+const toggleDoctorStatus = async (req, res, next) => {
   try {
     const { doctorId } = req.params;
-    const { isActive } = req.body;
 
-    if (typeof isActive !== "boolean") {
-      throw new ApiError(400, "isActive must be a boolean");
-    }
-
-    const doctor = await Doctor.findByIdAndUpdate(
-      doctorId,
-      { isActive },
-      { new: true },
-    );
-
+    const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       throw new ApiError(404, "Doctor not found");
     }
 
+    doctor.isActive = !doctor.isActive;
+    await doctor.save();
+
     console.log(
-      `Doctor ${isActive ? "activated" : "deactivated"} successfully`,
+      `Doctor is ${doctor.isActive ? "activated" : "deactivated"} successfully`,
     );
+
     return res
       .status(200)
       .json(
         new ApiResponse(
           doctor,
-          `Doctor ${isActive ? "activated" : "deactivated"} successfully`,
+          `Doctor ${doctor.isActive ? "activated" : "deactivated"} successfully`,
         ),
       );
   } catch (error) {
-    console.log("Failed to update doctor status");
+    console.log("Failed to toggle doctor status");
     next(error);
   }
 };
 
-export { getAllDoctors, getDoctorById, updateDoctor, updateDoctorStatus };
+export { getAllDoctors, getDoctorById, updateDoctor, toggleDoctorStatus };

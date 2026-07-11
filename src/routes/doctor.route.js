@@ -4,7 +4,7 @@ import {
   getAllDoctors,
   getDoctorById,
   updateDoctor,
-  updateDoctorStatus,
+  toggleDoctorStatus,
 } from "../controllers/doctor.controller.js";
 import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
@@ -19,7 +19,7 @@ router
   .route("/:doctorId")
   .patch(verifyJWT, authorizeRoles("ADMIN"), updateDoctor);
 router
-  .route("/:doctorId/status")
-  .patch(verifyJWT, authorizeRoles("ADMIN"), updateDoctorStatus);
+  .route("/:doctorId/toggle-status")
+  .patch(verifyJWT, authorizeRoles("ADMIN"), toggleDoctorStatus);
 
 export default router;
