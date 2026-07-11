@@ -2,8 +2,14 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import authRouter from "./routes/auth.route.js";
 import errorHandler from "./middlewares/errHandler.middleware.js";
+import authRouter from "./routes/auth.route.js";
+import departmentRouter from "./routes/department.route.js";
+import doctorRouter from "./routes/doctor.route.js";
+import patientRouter from "./routes/patient.route.js";
+import availabilityRouter from "./routes/availability.route.js";
+import appointmentRouter from "./routes/appointment.route.js";
+import adminRouter from "./routes/admin.route.js";
 
 const app = express();
 
@@ -20,6 +26,12 @@ app.get("/", (req, res) => {
 
 // routes
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/departments", departmentRouter);
+app.use("/api/v1/doctors", doctorRouter);
+app.use("/api/v1/patients", patientRouter);
+app.use("/api/v1/availability", availabilityRouter);
+app.use("/api/v1/appointments", appointmentRouter);
+app.use("/api/v1/admin", adminRouter);
 
 // centralized error handler — must be registered last
 app.use(errorHandler);
