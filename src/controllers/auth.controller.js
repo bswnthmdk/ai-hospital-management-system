@@ -147,12 +147,12 @@ const registerPatient = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
-    console.log("Patient registration is successful");
+    console.log("Patient registered successfully");
     return res
       .status(201)
-      .json(new ApiResponse(null, "Patient registration is successful"));
+      .json(new ApiResponse(null, "Patient registered successfully"));
   } catch (error) {
-    console.log("Patient registration is failed");
+    console.log("Failed to register patient");
     await session.abortTransaction();
     session.endSession();
     next(error); // IMPORTANT: centralized error handler
@@ -198,7 +198,7 @@ const loginPatient = async (req, res, next) => {
     };
 
     // 7. Send response
-    console.log("Patient log in is successful");
+    console.log("Patient logged in successfully");
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -213,11 +213,11 @@ const loginPatient = async (req, res, next) => {
               role: user.role,
             },
           },
-          "Patient log in is successful",
+          "Patient logged in successfully",
         ),
       );
   } catch (error) {
-    console.log("Patient log in is failed");
+    console.log("Failed to log in patient");
     next(error);
   }
 };
@@ -286,12 +286,12 @@ const registerDoctor = async (req, res, next) => {
     await session.commitTransaction();
     session.endSession();
 
-    console.log("Doctor registration is successful");
+    console.log("Doctor registered successfully");
     return res
       .status(201)
-      .json(new ApiResponse(null, "Doctor registration is successful"));
+      .json(new ApiResponse(null, "Doctor registered successfully"));
   } catch (error) {
-    console.log("Doctor registration is failed");
+    console.log("Failed to register doctor");
     await session.abortTransaction();
     session.endSession();
     next(error);
@@ -336,7 +336,7 @@ const loginDoctor = async (req, res, next) => {
     };
 
     // 7. Send response
-    console.log("Doctor login is successful");
+    console.log("Doctor logged in successfully");
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -351,11 +351,11 @@ const loginDoctor = async (req, res, next) => {
               role: user.role,
             },
           },
-          "Doctor login is successful",
+          "Doctor logged in successfully",
         ),
       );
   } catch (error) {
-    console.log("Doctor login is failed");
+    console.log("Failed to log in doctor");
     next(error);
   }
 };
@@ -386,12 +386,14 @@ const logoutUser = async (req, res, next) => {
       secure: true,
     };
 
+    console.log("Logged out successfully");
     return res
       .status(200)
       .clearCookie("accessToken", options)
       .clearCookie("refreshToken", options)
       .json(new ApiResponse(null, "Logged out successfully"));
   } catch (error) {
+    console.log("Failed to log out");
     next(error);
   }
 };
@@ -427,12 +429,12 @@ const registerAdmin = async (req, res, next) => {
       role: "ADMIN",
     });
 
-    console.log("Admin registration is successful");
+    console.log("Admin registered successfully");
     return res
       .status(201)
-      .json(new ApiResponse(null, "Admin registration is successful"));
+      .json(new ApiResponse(null, "Admin registered successfully"));
   } catch (error) {
-    console.log("Admin registration is failed");
+    console.log("Failed to register admin");
     next(error);
   }
 };
@@ -488,7 +490,7 @@ const loginAdmin = async (req, res, next) => {
         ),
       );
   } catch (error) {
-    console.log("Admin log in is failed");
+    console.log("Failed to log in admin");
     next(error);
   }
 };
