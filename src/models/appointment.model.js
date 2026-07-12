@@ -27,7 +27,7 @@ const appointmentSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    appointmentReason: {
+    appointmentDescription: {
       type: String,
       trim: true,
     },
@@ -51,13 +51,13 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // HARD GUARANTEE: one doctor cannot have two appointments at the same time
 appointmentSchema.index(
   { doctorId: 1, appointmentDateTime: 1 },
-  { unique: true }
+  { unique: true },
 );
 
 export default mongoose.model("Appointment", appointmentSchema);

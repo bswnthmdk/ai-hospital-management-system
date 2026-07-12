@@ -451,13 +451,13 @@ const loginAdmin = async (req, res, next) => {
     // 2. Find user
     const user = await User.findOne({ email, role: "ADMIN" });
     if (!user) {
-      throw new ApiError(401, "Invalid credentials");
+      throw new ApiError(401, "Email not registered as admin");
     }
 
     // 3. Verify password
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
-      throw new ApiError(401, "Invalid credentials");
+      throw new ApiError(401, "Wrong password for admin");
     }
 
     // 4. Generate tokens

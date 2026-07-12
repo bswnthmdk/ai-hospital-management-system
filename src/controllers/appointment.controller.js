@@ -2,9 +2,55 @@ import mongoose from "mongoose";
 
 import Availability from "../models/availability.model.js";
 import Appointment from "../models/appointment.model.js";
+import Patient from "../models/patient.model.js";
 import Doctor from "../models/doctor.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+
+// TEMPORARY: assign a doctor without time-based scheduling.
+// To be replaced once slot-based booking is finalized.
+const assignDoctorTemporary = async (req, res, next) => {
+  try {
+    const { doctorId, description } = req.body;
+
+    if (!doctorId) {
+      throw new ApiError(400, "doctorId is required");
+    }
+
+    // 1. Resolve the logged-in user's Patient profile
+    const patient = await Patient.findOne({ userId: req.user._id });
+    if (!patient) {
+      throw new ApiError(404, "Patient profile not found");
+    }
+
+    // 2. Validate doctor and derive department from the doctor's own record
+    const doctor = await Doctor.findOne({ _id: doctorId, isActive: true });
+    if (!doctor) {
+      throw new ApiError(404, "Doctor not found or inactive");
+    }
+
+    // 3. Create appointment (no real scheduling yet — placeholder timestamp)
+    const appointment = await Appointment.create({
+      patientId: patient._id,
+      doctorId: doctor._id,
+      departmentId: doctor.departmentId,
+      appointmentDateTime: new Date(),
+      appointmentDescription: description,
+      status: "BOOKED",
+    });
+
+    console.log("Doctor assigned successfully");
+    return res
+      .status(201)
+      .json(new ApiResponse(appointment, "Doctor assigned successfully"));
+  } catch (error) {
+    console.log("Failed to assign doctor");
+    if (error.code === 11000) {
+      return next(new ApiError(409, "Duplicate booking timestamp, try again"));
+    }
+    next(error);
+  }
+};
 
 const bookNewAppointment = async (req, res, next) => {
   const session = await mongoose.startSession();
@@ -12,7 +58,8 @@ const bookNewAppointment = async (req, res, next) => {
 
   try {
     const patientId = req.user._id; // The user who is booking an appointment is the patient (coming from verifyJWT)
-    const { doctorId, departmentId, appointmentDateTime, reason } = req.body;
+    const { doctorId, departmentId, appointmentDateTime, description } =
+      req.body;
 
     if (!doctorId || !departmentId || !appointmentDateTime) {
       throw new ApiError(400, "Missing required fields");
@@ -58,7 +105,7 @@ const bookNewAppointment = async (req, res, next) => {
           doctorId,
           departmentId,
           appointmentDateTime: requestedTime,
-          appointmentReason: reason,
+          appointmentDescription: description,
           status: "BOOKED",
         },
       ],
@@ -189,4 +236,9 @@ const getAllAppointments = async (req, res, next) => {
   }
 };
 
-export { bookNewAppointment, cancelAppointment, getAllAppointments };
+export {
+  assignDoctorTemporary,
+  bookNewAppointment,
+  cancelAppointment,
+  getAllAppointments,
+};

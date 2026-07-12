@@ -1,7 +1,7 @@
 import express from "express";
 
 import {
-  bookNewAppointment,
+  assignDoctorTemporary,
   cancelAppointment,
   getAllAppointments,
 } from "../controllers/appointment.controller.js";
@@ -12,7 +12,7 @@ const router = express.Router();
 // Only a PATIENT books their own appointment
 router
   .route("/")
-  .post(verifyJWT, authorizeRoles("PATIENT"), bookNewAppointment);
+  .post(verifyJWT, authorizeRoles("PATIENT"), assignDoctorTemporary);
 
 // PATIENT or DOCTOR can cancel (ownership check should happen inside the controller)
 router
