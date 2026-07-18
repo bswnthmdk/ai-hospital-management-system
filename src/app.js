@@ -2,6 +2,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+import { serve } from "inngest/express";
+import { inngest } from "./inngest/client.js";
+import { functions } from "./inngest/functions.js";
+
 import errorHandler from "./middlewares/errHandler.middleware.js";
 import authRouter from "./routes/auth.route.js";
 import departmentRouter from "./routes/department.route.js";
@@ -34,6 +38,8 @@ app.use("/api/v1/availability", availabilityRouter);
 app.use("/api/v1/appointments", appointmentRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/tickets", ticketRouter);
+
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // centralized error handler — must be registered last
 app.use(errorHandler);

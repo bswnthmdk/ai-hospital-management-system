@@ -2,6 +2,7 @@ import Ticket from "../models/ticket.model.js";
 import Patient from "../models/patient.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import { inngest } from "../inngest/client.js";
 
 const createTicket = async (req, res, next) => {
   try {
@@ -30,6 +31,12 @@ const createTicket = async (req, res, next) => {
     const ticket = await Ticket.create({
       patientId: patient._id,
       rawDescription: rawDescription.trim(),
+    });
+
+    // 4. Trigger the Inngest function to process the ticket asynchronously
+    await inngest.send({
+      name: "ticket/created",
+      data: { ticketId: ticket._id.toString() },
     });
 
     console.log("Ticket created successfully");
