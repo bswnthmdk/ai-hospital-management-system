@@ -30,7 +30,8 @@ const ticketSchema = new mongoose.Schema(
       default: [],
     },
 
-    clarifyingQuestions: [
+    // One round of yes/no clarifying questions, stored as question-answer pairs
+    clarifyingQA: [
       {
         question: { type: String, required: true },
         answer: { type: String, enum: ["YES", "NO"], required: true },
