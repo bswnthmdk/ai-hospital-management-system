@@ -9,20 +9,17 @@ const ticketSchema = new mongoose.Schema(
       index: true,
     },
 
-    // What the patient originally typed
     rawDescription: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // Gemini-corrected version (Step A)
-    cleanedDescription: {
+    redefinedDescription: {
       type: String,
       trim: true,
     },
 
-    // Gemini's extracted summary (Step B)
     summary: {
       type: String,
       trim: true,
@@ -33,29 +30,21 @@ const ticketSchema = new mongoose.Schema(
       default: [],
     },
 
-    suggestedSpecialization: {
-      type: String,
-      trim: true,
-    },
-
-    // Doctor list shown to the patient (Step C)
-    matchedDoctors: [
+    clarifyingQuestions: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Doctor",
+        question: { type: String, required: true },
+        answer: { type: String, enum: ["YES", "NO"], required: true },
       },
     ],
 
-    // Doctor the patient actually picked
-    selectedDoctorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Doctor",
+    confidence: {
+      type: String,
+      enum: ["HIGH", "MEDIUM", "LOW"],
     },
 
-    // Once confirmed, link to the real Appointment
-    appointmentId: {
+    matchedDepartmentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Appointment",
+      ref: "Department",
     },
 
     status: {
@@ -64,9 +53,9 @@ const ticketSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
-    failureReason: {
-      type: String,
-      trim: true,
+    appointmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Appointment",
     },
   },
   { timestamps: true },
