@@ -10,6 +10,7 @@ import patientRouter from "./routes/patient.route.js";
 import availabilityRouter from "./routes/availability.route.js";
 import appointmentRouter from "./routes/appointment.route.js";
 import adminRouter from "./routes/admin.route.js";
+import ticketRouter from "./routes/ticket.route.js";
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/v1/patients", patientRouter);
 app.use("/api/v1/availability", availabilityRouter);
 app.use("/api/v1/appointments", appointmentRouter);
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/tickets", ticketRouter);
 
 // centralized error handler — must be registered last
 app.use(errorHandler);
