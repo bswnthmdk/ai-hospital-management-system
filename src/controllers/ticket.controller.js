@@ -35,8 +35,11 @@ const createTicket = async (req, res, next) => {
 
     // 4. Trigger the Inngest function to process the ticket asynchronously
     await inngest.send({
-      name: "ticket/created",
-      data: { ticketId: ticket._id.toString() },
+      name: "ticket/created", //  Name of the event
+      data: { ticketId: ticket._id.toString() }, //  Payload - the info that the event needs to carry along with it.
+      /*
+       * Here the event function (processTicket) doesn't automatically know which ticket triggered it — so the ticketId need to pass inside data specifically so the function can look up the right ticket.
+       */
     });
 
     console.log("Ticket created successfully");
