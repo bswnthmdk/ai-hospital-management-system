@@ -1,5 +1,15 @@
 import { inngest } from "../client.js";
+import { ticketAgent } from "../agents/ticketAgent.js";
+import { buildTicketPrompt } from "../utils/buildTicketPrompt.js";
+import { buildFollowUpPrompt } from "../utils/buildFollowUpPrompt.js";
 import Ticket from "../../models/ticket.model.js";
+import Department from "../../models/department.model.js";
+
+const extractAnalysis = (response) => {
+  const toolCall = response.output.find((msg) => msg.type === "tool_call");
+  if (!toolCall) throw new Error("AI did not return structured analysis");
+  return toolCall.tools[0].input;
+};
 
 export const processTicket = inngest.createFunction(
   {
