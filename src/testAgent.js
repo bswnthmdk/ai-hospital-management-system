@@ -7,4 +7,4 @@ const response = await ticketAgent.run(
   "I've had a sharp pain in my chest for two days, especially when I breathe deeply.",
 );
 
-console.log(response.output);
+console.log(JSON.stringify(response.output, null, 2));
