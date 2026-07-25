@@ -51,5 +51,59 @@ const createTicket = async (req, res, next) => {
     next(error);
   }
 };
+const answerTicketQuestions = async (req, res, next) => {
+  try {
+    const { ticketId } = req.params;
+    const { answers } = req.body; // expects: ["YES", "NO"] in the same order as stored questions
 
-export { createTicket };
+    const patient = await Patient.findOne({ userId: req.user._id });
+    if (!patient) {
+      throw new ApiError(404, "Patient profile not found");
+    }
+
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      throw new ApiError(404, "Ticket not found");
+    }
+
+    if (ticket.patientId.toString() !== patient._id.toString()) {
+      throw new ApiError(403, "You do not have access to this ticket");
+    }
+
+    if (
+      !Array.isArray(answers) ||
+      answers.length !== ticket.clarifyingQA.length
+    ) {
+      throw new ApiError(
+        400,
+        "Answers must match the number of questions asked",
+      );
+    }
+
+    if (!answers.every((a) => a === "YES" || a === "NO")) {
+      throw new ApiError(400, "Each answer must be YES or NO");
+    }
+
+    // Fill in the answers, preserving question order
+    ticket.clarifyingQA = ticket.clarifyingQA.map((qa, i) => ({
+      question: qa.question,
+      answer: answers[i],
+    }));
+    await ticket.save();
+
+    // Wake up the paused Inngest function
+    await inngest.send({
+      name: "ticket/questions-answered",
+      data: { ticketId: ticket._id.toString() },
+    });
+
+    console.log("Ticket questions answered successfully");
+    return res
+      .status(200)
+      .json(new ApiResponse(ticket, "Answers submitted successfully"));
+  } catch (error) {
+    console.log("Failed to answer ticket questions");
+    next(error);
+  }
+};
+export { createTicket, answerTicketQuestions };
