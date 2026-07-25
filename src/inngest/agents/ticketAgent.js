@@ -5,22 +5,17 @@ const submitAnalysis = createTool({
   name: "submit_ticket_analysis",
   description: "Submit the structured analysis of a patient's ticket",
   parameters: z.object({
-    redefinedDescription: z
-      .string()
-      .describe("A clear, corrected version of the patient's description"),
-    summary: z.string().describe("A short summary of the problem"),
-    keywords: z.array(z.string()).describe("Key medical terms/symptoms"),
-    confidence: z
-      .enum(["HIGH", "MEDIUM", "LOW"])
-      .describe("How confident the match is"),
+    redefinedDescription: z.string(),
+    summary: z.string(),
+    keywords: z.array(z.string()),
+    confidence: z.enum(["HIGH", "MEDIUM", "LOW"]),
     matchedDepartment: z
       .string()
-      .describe("Best-fit department name from the provided list"),
+      .describe(
+        "Must be EXACTLY one of the department names provided in the prompt — never invent a new one",
+      ),
   }),
-  handler: async (params) => {
-    // Just returns what the model gave us — no side effects here yet
-    return params;
-  },
+  handler: async (params) => params,
 });
 
 export const ticketAgent = createAgent({
