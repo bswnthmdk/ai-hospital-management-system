@@ -106,4 +106,35 @@ const answerTicketQuestions = async (req, res, next) => {
     next(error);
   }
 };
-export { createTicket, answerTicketQuestions };
+const getTicketById = async (req, res, next) => {
+  try {
+    const { ticketId } = req.params;
+
+    const patient = await Patient.findOne({ userId: req.user._id });
+    if (!patient) {
+      throw new ApiError(404, "Patient profile not found");
+    }
+
+    const ticket = await Ticket.findById(ticketId).populate(
+      "matchedDepartmentId",
+      "name description",
+    );
+
+    if (!ticket) {
+      throw new ApiError(404, "Ticket not found");
+    }
+
+    if (ticket.patientId.toString() !== patient._id.toString()) {
+      throw new ApiError(403, "You do not have access to this ticket");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(ticket, "Ticket fetched successfully"));
+  } catch (error) {
+    console.log("Failed to fetch ticket");
+    next(error);
+  }
+};
+
+export { createTicket, answerTicketQuestions, getTicketById };
