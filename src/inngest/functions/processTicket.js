@@ -37,14 +37,11 @@ export const processTicket = inngest.createFunction(
       return await Department.find({ isActive: true }).lean();
     });
 
-    // Step 2 — first AI pass
-    let analysis = await step.run("first-analysis", async () => {
-      const prompt = buildTicketPrompt(ticket.rawDescription, departments);
-      const response = await ticketAgent.run(prompt);
-      return extractAnalysis(response);
-    });
+    // AI call — NOT wrapped in step.run, AgentKit handles its own steps internally
+    const firstPrompt = buildTicketPrompt(ticket.rawDescription, departments);
+    const firstResponse = await ticketAgent.run(firstPrompt);
+    let analysis = extractAnalysis(firstResponse);
 
-    // Step 3 — branch on confidence
     if (analysis.confidence !== "HIGH") {
       // Save questions on the ticket (no answers yet)
       await step.run("save-questions", async () => {
@@ -71,16 +68,18 @@ export const processTicket = inngest.createFunction(
       }
 
       // Step 4 — second AI pass using the answers
-      analysis = await step.run("second-analysis", async () => {
-        const updatedTicket = await Ticket.findById(ticketId);
-        const prompt = buildFollowUpPrompt(
-          ticket.rawDescription,
-          departments,
-          updatedTicket.clarifyingQA,
-        );
-        const response = await ticketAgent.run(prompt);
-        return extractAnalysis(response);
+      const updatedTicket = await step.run("fetch-answers", async () => {
+        return await Ticket.findById(ticketId);
       });
+
+      // Second AI call — also NOT wrapped in step.run
+      const followUpPrompt = buildFollowUpPrompt(
+        ticket.rawDescription,
+        departments,
+        updatedTicket.clarifyingQA,
+      );
+      const secondResponse = await ticketAgent.run(followUpPrompt);
+      analysis = extractAnalysis(secondResponse);
     }
 
     // Step 5 — save final analysis
