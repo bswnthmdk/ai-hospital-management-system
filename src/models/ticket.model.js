@@ -34,7 +34,7 @@ const ticketSchema = new mongoose.Schema(
     clarifyingQA: [
       {
         question: { type: String, required: true },
-        answer: { type: String, enum: ["YES", "NO"], required: true },
+        answer: { type: String, enum: ["YES", "NO"] },
       },
     ],
 

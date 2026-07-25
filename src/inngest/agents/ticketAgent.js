@@ -14,6 +14,11 @@ const submitAnalysis = createTool({
       .describe(
         "Must be EXACTLY one of the department names provided in the prompt — never invent a new one",
       ),
+    clarifyingQuestions: z
+      .array(z.string())
+      .describe(
+        "2-3 yes/no questions to ask the patient ONLY if confidence is MEDIUM or LOW. Empty array if confidence is HIGH.",
+      ),
   }),
   handler: async (params) => params,
 });

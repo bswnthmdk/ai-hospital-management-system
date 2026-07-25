@@ -13,7 +13,7 @@ await mongoose.connect(process.env.MONGODB_URI);
 const departments = await Department.find({ isActive: true });
 
 const prompt = buildTicketPrompt(
-  "I've had a sharp pain in my chest for two days, especially when I breathe deeply.",
+  "I've been feeling tired and having occasional headaches.",
   departments,
 );
 
