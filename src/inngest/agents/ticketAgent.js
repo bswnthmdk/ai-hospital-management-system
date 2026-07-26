@@ -1,6 +1,8 @@
 import { createAgent, createTool, gemini } from "@inngest/agent-kit";
 import { z } from "zod";
 
+// This tool defines the exact shape of the AI's reply.
+// The model must return its answer in this structure, otherwise the system cannot use it properly.
 const submitAnalysis = createTool({
   name: "submit_ticket_analysis",
   description: "Submit the structured analysis of a patient's ticket",
@@ -23,6 +25,8 @@ const submitAnalysis = createTool({
   handler: async (params) => params,
 });
 
+// This creates the actual AI worker for ticket classification.
+// Each time we call it, it uses the instructions and tool schema to produce a structured result.
 export const createTicketAgent = (nameSuffix) =>
   createAgent({
     name: `Ticket Analysis Agent - ${nameSuffix}`,

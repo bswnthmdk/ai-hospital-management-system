@@ -1,8 +1,11 @@
 export const buildTicketPrompt = (rawDescription, departments) => {
+  // Build a readable list of departments so the AI can choose from known options.
   const departmentList = departments
     .map((d) => `- ${d.name}: ${d.description || "No description"}`)
     .join("\n");
 
+  // Return a prompt that acts like a task sheet for the AI.
+  // It gives the patient description, the available departments, and the rules for the decision.
   return `
 Patient's description:
 "${rawDescription}"

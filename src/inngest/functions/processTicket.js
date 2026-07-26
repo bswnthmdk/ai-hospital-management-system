@@ -5,6 +5,8 @@ import { buildFollowUpPrompt } from "../utils/buildFollowUpPrompt.js";
 import Ticket from "../../models/ticket.model.js";
 import Department from "../../models/department.model.js";
 
+// This helper reads the AI response and pulls out the structured result.
+// In simple terms: the model sends its answer through a tool call, and we extract the data from it.
 const extractAnalysis = (response) => {
   const toolCall = response.output.find((msg) => msg.type === "tool_call");
   if (!toolCall) throw new Error("AI did not return structured analysis");
@@ -20,22 +22,26 @@ export const processTicket = inngest.createFunction(
   async ({ event, step }) => {
     const { ticketId } = event.data;
 
+    // Load the ticket from the database first. This is the starting point for the whole workflow.
     const ticket = await step.run("fetch-ticket", async () => {
       const found = await Ticket.findById(ticketId);
       if (!found) throw new Error(`Ticket ${ticketId} not found`);
       return found;
     });
 
+    // Get all active departments.
     const departments = await step.run("fetch-departments", async () => {
       return await Department.find({ isActive: true }).lean();
     });
 
-    // First AI pass — distinct agent instance
+    // First AI pass: ask the model to classify the ticket based on the patient's description.
     const firstPassAgent = createTicketAgent("Initial");
     const firstPrompt = buildTicketPrompt(ticket.rawDescription, departments);
     const firstResponse = await firstPassAgent.run(firstPrompt);
     let analysis = extractAnalysis(firstResponse);
 
+    // If the AI is not confident, we ask the patient a few simple follow-up questions.
+    // This makes the second pass more accurate.
     if (analysis.confidence !== "HIGH") {
       await step.run("save-questions", async () => {
         await Ticket.findByIdAndUpdate(ticketId, {
@@ -45,6 +51,7 @@ export const processTicket = inngest.createFunction(
         });
       });
 
+      // Wait for the patient to answer the questions. If nobody answers in time(1 day), the ticket is marked failed.
       const answerEvent = await step.waitForEvent("wait-for-answers", {
         event: "ticket/questions-answered",
         match: "data.ticketId",
@@ -62,7 +69,7 @@ export const processTicket = inngest.createFunction(
         return await Ticket.findById(ticketId);
       });
 
-      // Second AI pass — different distinct agent instance
+      // Second AI pass: run the model again, this time using the patient's answers to make a better decision.
       const secondPassAgent = createTicketAgent("FollowUp");
       const followUpPrompt = buildFollowUpPrompt(
         ticket.rawDescription,
@@ -73,6 +80,7 @@ export const processTicket = inngest.createFunction(
       analysis = extractAnalysis(secondResponse);
     }
 
+    // Save the final decision back to the ticket so the rest of the system can use it.
     await step.run("save-final-analysis", async () => {
       const matchedDept = departments.find(
         (d) => d.name === analysis.matchedDepartment,
