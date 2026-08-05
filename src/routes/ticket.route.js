@@ -4,6 +4,7 @@ import {
   createTicket,
   answerTicketQuestions,
   getTicketById,
+  getDoctorsFromSuggestedDepartment,
 } from "../controllers/ticket.controller.js";
 import { verifyJWT, authorizeRoles } from "../middlewares/auth.middleware.js";
 
@@ -17,5 +18,8 @@ router
 router
   .route("/:ticketId/answer-questions")
   .patch(verifyJWT, authorizeRoles("PATIENT"), answerTicketQuestions);
+router
+  .route("/:ticketId/doctors")
+  .get(verifyJWT, authorizeRoles("PATIENT"), getDoctorsFromSuggestedDepartment);
 
 export default router;

@@ -1,5 +1,6 @@
 import Ticket from "../models/ticket.model.js";
 import Patient from "../models/patient.model.js";
+import Doctor from "../models/doctor.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { inngest } from "../inngest/client.js";
@@ -136,5 +137,56 @@ const getTicketById = async (req, res, next) => {
     next(error);
   }
 };
+const getDoctorsFromSuggestedDepartment = async (req, res, next) => {
+  try {
+    const { ticketId } = req.params;
 
-export { createTicket, answerTicketQuestions, getTicketById };
+    const patient = await Patient.findOne({ userId: req.user._id });
+    if (!patient) {
+      throw new ApiError(404, "Patient profile not found");
+    }
+
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      throw new ApiError(404, "Ticket not found");
+    }
+
+    if (ticket.patientId.toString() !== patient._id.toString()) {
+      throw new ApiError(403, "You do not have access to this ticket");
+    }
+
+    if (ticket.status !== "PROCESSED") {
+      throw new ApiError(
+        400,
+        `Ticket is not ready yet (status: ${ticket.status})`,
+      );
+    }
+
+    const doctors = await Doctor.find({
+      departmentId: ticket.matchedDepartmentId,
+      isActive: true,
+    })
+      .populate("userId", "name email")
+      .sort({ experienceYears: -1 }); // swap to rating once that field exists
+
+    console.log("Doctors from suggested department fetched successfully");
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          doctors,
+          "Doctors from suggested department fetched successfully",
+        ),
+      );
+  } catch (error) {
+    console.log("Failed to fetch doctors from suggested department");
+    next(error);
+  }
+};
+
+export {
+  createTicket,
+  answerTicketQuestions,
+  getTicketById,
+  getDoctorsFromSuggestedDepartment,
+};
